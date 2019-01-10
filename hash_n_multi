@@ -1,0 +1,96 @@
+role user (
+    U,S : agent,
+    SND,RCV    : channel(dy),
+    F          : hash_func,
+    PW      : text)
+played_by U def=
+
+  local
+    State       : nat,
+    Na,Nb   : text,
+    Nah4,Nah3      : message
+    
+  init  State := 0
+
+  transition
+
+ 1. State  = 0 /\ RCV(start) =|>
+    State':= 2 /\ Nah4' := F(F(F(F(PW))))
+               /\ SND(Nah4'.U)
+
+ 2. State  = 2 /\ RCV(Nb'.S) =|>
+    State':= 4 /\ Nah3' := F(F(F(PW)))
+               /\ SND(Nah3'.U)
+	       /\ witness(U,S,user_server_nah3,Nah3')
+			   
+end role
+
+
+role server (
+    U,S : agent,
+    SND,RCV    : channel(dy),
+    F          : hash_func,
+    PW      : text)
+played_by S def=
+
+  local
+    State          : nat,
+    Na,Nb   : text,
+    Nah4,Nah3      : message
+
+  init  State := 1
+
+  transition
+
+  1. State = 1 /\ RCV(F(F(F(F(PW)))).U) =|> 
+     State':= 3 /\ Nb' := new()
+		/\ Nah3' := F(F(F(PW)))
+		/\ SND(Nb'.S)
+
+  2. State = 3 /\ RCV(Nah3.U) =|>
+     State':= 5 /\ request(S,U,user_server_nah3,Nah3)
+		/\ secret(Nah3,sec_pw,{U,S})
+         
+end role
+
+
+role session(
+    U,S : agent,
+    F          : hash_func,
+    PW      : text)
+def=
+
+  local SU,RU : channel (dy)
+
+  composition
+    user(U,S,SU,RU,F,PW)
+ /\ server(U,S,SU,RU,F,PW)
+
+end role
+
+role environment()
+def=
+
+  const
+    u,s      : agent,
+    f            : hash_func,
+    user_server_nah3,sec_pw     : protocol_id,
+    pw,pwi,pwi2        : text
+
+  intruder_knowledge = {u,s,f,pwi,pwi2}
+
+  composition
+     session(u,s,f,pw)
+  /\ session(u,i,f,pwi)
+  /\ session(i,s,f,pwi2)
+end role
+
+
+goal
+  authentication_on user_server_nah3
+  secrecy_of sec_pw
+
+end goal
+
+
+environment()
