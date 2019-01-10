@@ -1,0 +1,83 @@
+role user (
+    U,S : agent,
+    SND,RCV    : channel(dy),
+    F          : hash_func,
+    PW      : text)
+played_by U def=
+
+  local
+    State       : nat,
+    Nah4      : message
+    
+  init  State := 0
+
+  transition
+
+ 1. State  = 0 /\ RCV(start) =|>
+    State':= 2 /\ Nah4' := F(F(F(F(PW))))
+               /\ SND(Nah4'.U)
+	       /\ witness(U,S,user_server_nah4,Nah4')
+			   
+end role
+
+
+role server (
+    U,S : agent,
+    SND,RCV    : channel(dy),
+    F          : hash_func,
+    PW      : text)
+played_by S def=
+
+  local
+    State          : nat
+
+  init  State := 1
+
+  transition
+
+  1. State = 1 /\ RCV(F(F(F(F(PW)))).U) =|> 
+     State':= 3 /\ request(S,U,user_server_nah4,F(F(F(F(PW)))))
+
+         
+end role
+
+
+role session(
+    U,S : agent,
+    F          : hash_func,
+    PW      : text)
+def=
+
+  local SU,RU : channel (dy)
+
+  composition
+    user(U,S,SU,RU,F,PW)
+ /\ server(U,S,SU,RU,F,PW)
+
+end role
+
+role environment()
+def=
+
+  const
+    u,s      : agent,
+    f            : hash_func,
+    user_server_nah4     : protocol_id,
+    pw,pwi,pwi2        : text
+
+  intruder_knowledge = {u,s,f,pwi,pwi2}
+
+  composition
+     session(u,s,f,pw)
+  /\ session(u,i,f,pwi)
+  /\ session(i,s,f,pwi2)
+end role
+
+
+goal
+  authentication_on user_server_nah4
+
+end goal
+
+
+environment()
