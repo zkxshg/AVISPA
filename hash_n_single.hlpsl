@@ -1,3 +1,6 @@
+# Lamport, L. (1981). "Password authentication with insecure communication." Commun. ACM 24(11): 770-772. -> hash^1000
+# 郭丹青 (2014). "OAuth2. 0 协议形式化验证: 使用 AVISPA." 计算机系统应用 23(11): 196-202. -> AVISPA	
+
 role user (
     U,S : agent,
     SND,RCV    : channel(dy),
